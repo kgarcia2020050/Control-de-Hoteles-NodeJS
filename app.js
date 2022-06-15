@@ -3,16 +3,14 @@ const cors = require('cors');
 var app = express();
 
 const rutasInicio = require('./src/routes/usuario.route');
-//const rutasEmpresas= require('./src/routes/CRUDAdmin');
-//const rutasSucursales=require("./src/routes/CRUDSucursales")
-//const rutasProductos= require('./src/routes/CRUDProductos');
+const rutasHotel=require("./src/routes/hotel.route")
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 app.use(cors());
 
-app.use('/api',rutasInicio);
+app.use('/api',rutasInicio,rutasHotel);
 
 
 module.exports = app;
