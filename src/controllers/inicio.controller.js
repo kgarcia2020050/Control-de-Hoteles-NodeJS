@@ -27,57 +27,40 @@ function crearAdmin() {
 
 function registroUsuarios(req, res) {
   var datos = req.body;
-  if (
-    datos.nombre == null ||
-    datos.email == null ||
-    datos.password == null ||
-    datos.verificar == null
-  ) {
+  if (datos.nombre == null || datos.email == null || datos.password == null) {
     return res.status(500).send({ Error: "Debes llenar todos los datos." });
   } else {
-    if (datos.password != datos.verificar) {
-      return res.status(500).send({
-        Error: "Las claves no coinciden, verificalo y vuelve a intentar.",
-      });
-    } else {
-      Usuarios.findOne({ email: datos.email }, (error, correoExistente) => {
-        if (error)
-          return res
-            .status(404)
-            .send({ Error: "Error al procesar la peticion." });
-        if (correoExistente) {
-          return res
-            .status(500)
-            .send({ Error: "Ya hay un usuario  registrado con este correo." });
-        } else {
-          var modeloUsuario = new Usuarios();
-          modeloUsuario.nombre = datos.nombre;
-          modeloUsuario.email = datos.email;
-          modeloUsuario.rol = "USUARIO";
-          encriptar.hash(
-            datos.password,
-            null,
-            null,
-            (error, claveEncriptada) => {
-              modeloUsuario.password = claveEncriptada;
-              modeloUsuario.save((error, nuevoUsuario) => {
-                if (error)
-                  return res
-                    .status(404)
-                    .send({ Error: "Error en la peticion." });
-                if (!nuevoUsuario)
-                  return res
-                    .status(500)
-                    .send({ Error: "No te pudiste registrar." });
-                return res
-                  .status(200)
-                  .send({ Exito: "Te has registrado exitosamente." });
-              });
-            }
-          );
-        }
-      });
-    }
+    Usuarios.findOne({ email: datos.email }, (error, correoExistente) => {
+      if (error)
+        return res
+          .status(404)
+          .send({ Error: "Error al procesar la peticion." });
+      if (correoExistente) {
+        console.log(correoExistente)
+        return res
+          .status(500)
+          .send({ Error: "Ya hay un usuario registrado con este correo." });
+      } else {
+        var modeloUsuario = new Usuarios();
+        modeloUsuario.nombre = datos.nombre;
+        modeloUsuario.email = datos.email;
+        modeloUsuario.rol = "USUARIO";
+        encriptar.hash(datos.password, null, null, (error, claveEncriptada) => {
+          modeloUsuario.password = claveEncriptada;
+          modeloUsuario.save((error, nuevoUsuario) => {
+            if (error)
+              return res.status(404).send({ Error: "Error en la peticion." });
+            if (!nuevoUsuario)
+              return res
+                .status(500)
+                .send({ Error: "No te pudiste registrar." });
+            return res
+              .status(200)
+              .send({ Exito: "Te has registrado exitosamente." });
+          });
+        });
+      }
+    });
   }
 }
 
@@ -94,20 +77,26 @@ function Login(req, res) {
           datos.password,
           usuarioEncontrado.password,
           (error, verificado) => {
-              if(verificado){
-                  if(datos.obtenerToken=="true"){
-                      return res.status(200).send({Token:jwt.crearToken(usuarioEncontrado)})
-                  }else{
-                      usuarioEncontrado.password=undefined;
-                      return res.status(200).send({Inicio_exitoso:usuarioEncontrado})
-                  }
-              }else{
-                  return res.status(500).send({Error:"La clave no coincide."})
+            if (verificado) {
+              if (datos.obtenerToken == "true") {
+                return res
+                  .status(200)
+                  .send({ Token: jwt.crearToken(usuarioEncontrado) });
+              } else {
+                usuarioEncontrado.password = undefined;
+                return res
+                  .status(200)
+                  .send({ Inicio_exitoso: usuarioEncontrado });
               }
+            } else {
+              return res.status(500).send({ Error: "La clave no coincide." });
+            }
           }
         );
-      }else{
-          return res.status(500).send({Error:"Los datos que ingresaste no existen."})
+      } else {
+        return res
+          .status(500)
+          .send({ Error: "Los datos que ingresaste no existen." });
       }
     });
   }
@@ -116,5 +105,5 @@ function Login(req, res) {
 module.exports = {
   crearAdmin,
   registroUsuarios,
-  Login
+  Login,
 };
