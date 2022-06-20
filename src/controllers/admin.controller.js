@@ -11,67 +11,61 @@ function nuevoHotel(req, res) {
     datos.nombre == null ||
     datos.email == null ||
     datos.password == null ||
-    datos.verificar == null ||
     datos.direccion == null ||
     datos.cuartos == null ||
     datos.gerente == null
   ) {
     return res.status(500).send({ Error: "Debes llenar todos los campos." });
   } else {
-    if (datos.password != datos.verificar) {
-      return res.status(500).send({ Error: "Las claves no coinciden." });
-    } else {
-      Usuarios.findOne(
-        {
-          rol: "HOTEL",
-          nombre: { $regex: datos.nombre, $options: "i" },
-        },
-        (error, hotelExistente) => {
-          if (hotelExistente) {
-            return res
-              .status(500)
-              .send({ Error: "Ya hay un hotel con el mismo nombre." });
-          } else {
-            var modelo = new Usuarios();
-            modelo.nombre = datos.nombre;
-            modelo.email = datos.email;
-            modelo.direccion = datos.direccion;
-            modelo.cuartos = datos.cuartos;
-            modelo.gerente = datos.gerente;
-            modelo.rol = "HOTEL";
-            encriptar.hash(
-              datos.password,
-              null,
-              null,
-              (error, claveEncriptada) => {
-                modelo.password = claveEncriptada;
-                modelo.save((error, nuevoHotel) => {
-                  if (error)
-                    return res.status(404).send({ Error: "Hubo un error." });
-                  if (!nuevoHotel)
-                    return res
-                      .status(500)
-                      .send({ Error: "No se pudo guardar al hotel." });
+    Usuarios.findOne(
+      {
+        rol: "HOTEL",
+        nombre: datos.nombre,
+      },
+      (error, hotelExistente) => {
+        if (hotelExistente) {
+          return res
+            .status(500)
+            .send({ Error: "Ya hay un hotel con el mismo nombre." });
+        } else {
+          var modelo = new Usuarios();
+          modelo.nombre = datos.nombre;
+          modelo.email = datos.email;
+          modelo.direccion = datos.direccion;
+          modelo.cuartos = datos.cuartos;
+          modelo.gerente = datos.gerente;
+          modelo.rol = "HOTEL";
+          encriptar.hash(
+            datos.password,
+            null,
+            null,
+            (error, claveEncriptada) => {
+              modelo.password = claveEncriptada;
+              modelo.save((error, nuevoHotel) => {
+                if (error)
+                  return res.status(404).send({ Error: "Hubo un error." });
+                if (!nuevoHotel)
                   return res
-                    .status(200)
-                    .send({ Nuevo_hotel: "Hotel agregado exitosamente." });
-                });
-              }
-            );
-          }
+                    .status(500)
+                    .send({ Error: "No se pudo guardar al hotel." });
+                return res
+                  .status(200)
+                  .send({ Nuevo_hotel: "Hotel agregado exitosamente." });
+              });
+            }
+          );
         }
-      );
-    }
+      }
+    );
   }
 }
 
-function usuariosRegistrados(req,res){
-  Usuarios.find({rol:"USUARIO"},(error,usuarios)=>{
-    if(error)return res.status(500).send({Error:"Error en la peticion."})
-    return res.status(200).send({Usuarios:usuarios})
-  })
+function usuariosRegistrados(req, res) {
+  Usuarios.find({ rol: "USUARIO" }, (error, usuarios) => {
+    if (error) return res.status(500).send({ Error: "Error en la peticion." });
+    return res.status(200).send({ Usuarios: usuarios });
+  });
 }
-
 
 function borrarHotel(req, res) {
   Habitaciones.deleteMany(
@@ -106,14 +100,25 @@ function verHoteles(req, res) {
     if (error)
       return res.status(500).send({ Error: "Error al obtener hoteles." });
     if (!hoteles) return res.status(404).send("No hay hoteles registrados.");
-    return res.status(200).send({Hoteles:hoteles})
+    return res.status(200).send({ Hoteles: hoteles });
   });
 }
 
-
-module.exports={
-    borrarHotel,
-    nuevoHotel,
-    verHoteles,
-    usuariosRegistrados
+function hotelesMasSolicitados(req, res) {
+  Usuarios.find({ solicitado: { $gt: 3 } }, (error, masSolicitados) => {
+    if (error) return res.status(500).send({ Error: "Error en la peticion" });
+    if (masSolicitados.length == 0)
+      return res
+        .status(200)
+        .send({ Hoteles_solicitados: "No hay hoteles muy populares ahora." });
+    return res.status(200).send({ Hoteles_solicitados: masSolicitados });
+  }).sort({ solicitado: -1 });
 }
+
+module.exports = {
+  borrarHotel,
+  nuevoHotel,
+  verHoteles,
+  usuariosRegistrados,
+  hotelesMasSolicitados,
+};

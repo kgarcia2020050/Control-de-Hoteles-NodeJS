@@ -7,8 +7,9 @@ const Usuarios= Schema({
     password:String,
     rol:String,
     direccion:String,
-    cuartos:String,
+    cuartos:Number,
     gerente:String,
+    solicitado:Number
 })
 
 module.exports =mongoose.model("Usuarios",Usuarios)
