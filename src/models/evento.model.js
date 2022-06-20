@@ -6,6 +6,7 @@ const Eventos=Schema({
     lugar:String,
     fecha:String,
     horario:String,
+    precio:Number,
     idHotel:{type:Schema.Types.ObjectId,ref:"Usuarios"}
 })
 

@@ -7,6 +7,7 @@ const Habitaciones=Schema({
     espacio:Number,
     verificar:Boolean,
     disponibilidad:String,
+    precio:Number,
     idHotel:{type:Schema.Types.ObjectId,ref:"Usuarios"},
 })
 
