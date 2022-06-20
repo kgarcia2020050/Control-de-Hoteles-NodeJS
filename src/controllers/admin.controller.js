@@ -65,6 +65,13 @@ function nuevoHotel(req, res) {
   }
 }
 
+function usuariosRegistrados(req,res){
+  Usuarios.find({rol:"USUARIO"},(error,usuarios)=>{
+    if(error)return res.status(500).send({Error:"Error en la peticion."})
+    return res.status(200).send({Usuarios:usuarios})
+  })
+}
+
 
 function borrarHotel(req, res) {
   Habitaciones.deleteMany(
@@ -107,5 +114,6 @@ function verHoteles(req, res) {
 module.exports={
     borrarHotel,
     nuevoHotel,
-    verHoteles
+    verHoteles,
+    usuariosRegistrados
 }
