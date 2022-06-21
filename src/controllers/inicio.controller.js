@@ -1,6 +1,4 @@
 const encriptar = require("bcrypt-nodejs");
-const res = require("express/lib/response");
-const { model } = require("mongoose");
 const Usuarios = require("../models/usuario.model");
 const jwt = require("../service/jwt");
 
@@ -36,15 +34,20 @@ function registroUsuarios(req, res) {
           .status(404)
           .send({ Error: "Error al procesar la peticion." });
       if (correoExistente) {
-        console.log(correoExistente)
+        console.log(correoExistente);
         return res
           .status(500)
           .send({ Error: "Ya hay un usuario registrado con este correo." });
       } else {
+        const tiempoTranscurrido = Date.now();
+        const hoy = new Date(tiempoTranscurrido);
         var modeloUsuario = new Usuarios();
         modeloUsuario.nombre = datos.nombre;
         modeloUsuario.email = datos.email;
         modeloUsuario.rol = "USUARIO";
+        modeloUsuario.dia = hoy.getDate();
+        modeloUsuario.mes = hoy.getMonth();
+        modeloUsuario.anio = hoy.getFullYear();
         encriptar.hash(datos.password, null, null, (error, claveEncriptada) => {
           modeloUsuario.password = claveEncriptada;
           modeloUsuario.save((error, nuevoUsuario) => {

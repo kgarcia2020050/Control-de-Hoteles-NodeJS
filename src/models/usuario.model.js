@@ -9,7 +9,10 @@ const Usuarios= Schema({
     direccion:String,
     cuartos:Number,
     gerente:String,
-    solicitado:Number
+    solicitado:Number,
+    dia:Number,
+    mes:Number,
+    anio:Number,
 })
 
 module.exports =mongoose.model("Usuarios",Usuarios)
