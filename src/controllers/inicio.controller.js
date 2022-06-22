@@ -34,7 +34,6 @@ function registroUsuarios(req, res) {
           .status(404)
           .send({ Error: "Error al procesar la peticion." });
       if (correoExistente) {
-        console.log(correoExistente);
         return res
           .status(500)
           .send({ Error: "Ya hay un usuario registrado con este correo." });
