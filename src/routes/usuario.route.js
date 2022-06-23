@@ -9,5 +9,11 @@ api.post("/login",controller.Login)
 api.post("/registro",controller.registroUsuarios)
 api.get("/editarPerfil/:ID",verificacion.Auth,controlador.obtenerId)
 api.put("/modificarPerfil/:ID",verificacion.Auth,controlador.editar)
+api.get("/verHotel/:ID",verificacion.Auth,controlador.verHotel)
+api.post("/pagar/:ID/:precio/:cuarto",controlador.pagarHabitacion)
+api.get("/verCuarto/:ID",verificacion.Auth,controlador.verHabitacion)
+api.get("/misReservas/:ID",verificacion.Auth,controlador.reservaciones)
+
+api.put("/cancelarReservacion/:ID",controlador.cancelarReservacion)
 
 module.exports=api;

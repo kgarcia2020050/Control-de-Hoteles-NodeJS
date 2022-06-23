@@ -13,6 +13,7 @@ const Usuarios= Schema({
     dia:Number,
     mes:Number,
     anio:Number,
+    telefono:String
 })
 
 module.exports =mongoose.model("Usuarios",Usuarios)

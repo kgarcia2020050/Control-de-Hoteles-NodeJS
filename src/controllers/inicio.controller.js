@@ -44,6 +44,7 @@ function registroUsuarios(req, res) {
         modeloUsuario.nombre = datos.nombre;
         modeloUsuario.email = datos.email;
         modeloUsuario.rol = "USUARIO";
+        modeloUsuario.telefono=datos.telefono;
         modeloUsuario.dia = hoy.getDate();
         modeloUsuario.mes = hoy.getMonth();
         modeloUsuario.anio = hoy.getFullYear();
