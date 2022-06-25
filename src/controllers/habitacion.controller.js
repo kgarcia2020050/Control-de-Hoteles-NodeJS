@@ -77,32 +77,12 @@ function verHabitaciones(req, res) {
         .status(500)
         .send({ Error: "No hay habitaciones en este hotel." });
     return res.status(200).send({ Mis_habitaciones: misHabitaciones });
-  });
+  }).populate("idUsuario nombre");
 }
 
-function eliminarCuarto(req, res) {
-  Habitaciones.findByIdAndDelete(
-    { _id: req.params.ID },
-    (error, cuartoBorrado) => {
-      if (error)
-        return res.status(500).send({ Error: "Error al borrar al cuarto." });
-      Usuarios.findByIdAndUpdate(
-        { _id: req.params.Hotel },
-        { $inc: { cuartos: 1 * 1 } },
-        (error, modificarHotel) => {
-          if (error)
-            return res
-              .status(500)
-              .send({ Error: "Error al agregar el cuarto." });
-              return res.status(200).send({Exito:"Hotel modificado."})
-        }
-      );
-    }
-  );
-}
+
 
 module.exports = {
   agregarHabitacion,
   verHabitaciones,
-  eliminarCuarto
 };

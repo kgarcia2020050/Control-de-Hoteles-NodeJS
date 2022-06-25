@@ -34,6 +34,7 @@ function nuevoHotel(req, res) {
           modelo.direccion = datos.direccion;
           modelo.cuartos = datos.cuartos;
           modelo.gerente = datos.gerente;
+          modelo.telefono=datos.telefono;
           modelo.rol = "HOTEL";
           encriptar.hash(
             datos.password,
@@ -67,33 +68,6 @@ function usuariosRegistrados(req, res) {
   });
 }
 
-function borrarHotel(req, res) {
-  Habitaciones.deleteMany(
-    { idHotel: req.params.ID },
-    (error, cuartosBorrados) => {
-      if (error)
-        return res
-          .status(500)
-          .send({ Error: "Error al eliminar las habitaciones del hotel." });
-      Usuarios.findByIdAndDelete(
-        { _id: req.params.ID, rol: "HOTEL" },
-        (error, hotelEliminado) => {
-          if (error)
-            return res
-              .status(500)
-              .send({ Error: "Error al eliminar al hotel." });
-          if (!hotelEliminado)
-            return res
-              .status(500)
-              .send({ Error: "No se pudo eliminar al hotel." });
-          return res
-            .status(200)
-            .send({ Hotel_eliminado: "Hotel eliminado correctamente." });
-        }
-      );
-    }
-  );
-}
 
 function verHoteles(req, res) {
   Usuarios.find({ rol: "HOTEL" }, (error, hoteles) => {
@@ -105,7 +79,7 @@ function verHoteles(req, res) {
 }
 
 function hotelesMasSolicitados(req, res) {
-  Usuarios.find({ solicitado: { $gt: 3 } }, (error, masSolicitados) => {
+  Usuarios.find({ solicitado: { $gt: 1 } }, (error, masSolicitados) => {
     if (error) return res.status(500).send({ Error: "Error en la peticion" });
     if (masSolicitados.length == 0)
       return res
@@ -116,7 +90,6 @@ function hotelesMasSolicitados(req, res) {
 }
 
 module.exports = {
-  borrarHotel,
   nuevoHotel,
   verHoteles,
   usuariosRegistrados,

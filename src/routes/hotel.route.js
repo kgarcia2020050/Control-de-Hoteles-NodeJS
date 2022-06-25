@@ -6,7 +6,6 @@ const autenticacion=require('../middleware/autenticacion')
 
 api.post("/nuevoHotel",autenticacion.Auth,controller.nuevoHotel)
 api.get("/verHoteles",autenticacion.Auth,controller.verHoteles)
-api.delete("/borrarHotel/:ID",autenticacion.Auth,controller.borrarHotel)
 api.get("/usuariosRegistrados",autenticacion.Auth,controller.usuariosRegistrados)
 api.get("/masSolicitados",autenticacion.Auth,controller.hotelesMasSolicitados)
 

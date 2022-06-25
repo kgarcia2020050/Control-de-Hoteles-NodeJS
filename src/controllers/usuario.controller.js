@@ -1,7 +1,27 @@
 const Usuarios = require("../models/usuario.model");
 const Habitaciones = require("../models/habitacion.model");
 const Facturas = require("../models/factura.model");
-const { response } = require("express");
+const Eventos = require("../models/evento.model");
+
+const Historiales = require("../models/historial.model");
+
+function agregarEvento(req, res) {
+  var datos = req.body;
+  if (datos.nombre == "" || datos.lugar == "" || datos.fecha)
+    Eventos.find(
+      { idHotel: req.params.ID, nombre: datos.nombre },
+      (error, eventoEncontrado) => {
+        if (error)
+          return res.status(500).send({ Error: "Error al obtener el evento." });
+        if (eventoEncontrado) {
+          return res
+            .status(500)
+            .send({ Error: "Ya organizaste un evento con el mismo nombre." });
+        } else {
+        }
+      }
+    );
+}
 
 function editar(req, res) {
   var datos = req.body;
@@ -38,7 +58,6 @@ function editar(req, res) {
 }
 
 function obtenerId(req, res) {
-  //console.log( hoy.getFullYear().toString() )
   Usuarios.findById({ _id: req.params.ID }, (error, perfilEncontrado) => {
     if (error)
       return res.status(500).send({ Error: "Error al obtener el perfil." });
@@ -86,18 +105,85 @@ function pagarHabitacion(req, res) {
         },
         { new: true },
         (error, cuartoOcupado) => {
-          Facturas.findOneAndUpdate(
-            { idUsuario: req.params.ID },
-            { $inc: { total: req.params.precio * 1 } },
-            { new: true },
-            (error, facturaActualizada) => {
+          Historiales.findOne(
+            {
+              idUsuario: req.params.ID,
+              idHotel: cuartoOcupado.idHotel,
+            },
+            (error, guardado) => {
               if (error)
-                return res.status(500).send({
-                  Error: "Error al actualizar el precio de la factura",
-                });
-              return res
-                .status(200)
-                .send({ Precio_actualizado: facturaActualizada });
+                return res
+                  .status(500)
+                  .send({ Error: "Error al buscar el historial" });
+              if (guardado) {
+                Facturas.findOneAndUpdate(
+                  { idUsuario: req.params.ID },
+                  { $inc: { total: req.params.precio * 1 } },
+                  { new: true },
+                  (error, facturaActualizada) => {
+                    if (error) {
+                      return res.status(500).send({
+                        Error: "Error al actualizar el precio de la factura",
+                      });
+                    }
+                    Usuarios.findByIdAndUpdate(
+                      { _id: cuartoOcupado.idHotel },
+                      { $inc: { solicitado: 2 * 1 } },
+                      { new: true },
+                      (error, hotelSolicitado) => {
+                        if (error)
+                          return res.status(500).send({
+                            Error:
+                              "Error al modificar las solicitudes del hotel.",
+                          });
+                        return res.status(200).send({
+                          Precio_actualizado: facturaActualizada,
+                          aumento: hotelSolicitado,
+                        });
+                      }
+                    );
+                  }
+                );
+              } else {
+                Facturas.findOneAndUpdate(
+                  { idUsuario: req.params.ID },
+                  { $inc: { total: req.params.precio * 1 } },
+                  { new: true },
+                  (error, facturaActualizada) => {
+                    if (error) {
+                      return res.status(500).send({
+                        Error: "Error al actualizar el precio de la factura",
+                      });
+                    }
+                    Usuarios.findByIdAndUpdate(
+                      { _id: cuartoOcupado.idHotel },
+                      { $inc: { solicitado: 2 * 1 } },
+                      { new: true },
+                      (error, hotelSolicitado) => {
+                        if (error)
+                          return res.status(500).send({
+                            Error:
+                              "Error al modificar las solicitudes del hotel.",
+                          });
+                        var modeloHistorial = new Historiales();
+                        modeloHistorial.idUsuario = req.params.ID;
+                        modeloHistorial.idHotel = cuartoOcupado.idHotel;
+                        modeloHistorial.save((error, historialGuardado) => {
+                          if (error)
+                            return res.status(500).send({
+                              Error: "Error al actualizar el historial.",
+                            });
+                          return res.status(200).send({
+                            Precio_actualizado: facturaActualizada,
+                            aumento: hotelSolicitado,
+                            actualizado: historialGuardado,
+                          });
+                        });
+                      }
+                    );
+                  }
+                );
+              }
             }
           );
         }
@@ -110,58 +196,74 @@ function pagarHabitacion(req, res) {
       } else {
         Habitaciones.findByIdAndUpdate(
           { _id: req.params.cuarto },
-          { disponibilidad: "RESERVADA", verificar: false },
+          {
+            disponibilidad: "RESERVADA",
+            verificar: false,
+            idUsuario: req.params.ID,
+          },
           { new: true },
           (error, cuartoOcupado) => {
             if (error)
               return res
                 .status(500)
                 .send({ Error: "Error al obtener el cuarto" });
-            var modeloFactura = new Facturas();
-            modeloFactura.total = req.params.precio;
-            modeloFactura.idUsuario = req.params.ID;
-            modeloFactura.save((error, facturaAgregada) => {
-              if (error)
-                return res
-                  .status(500)
-                  .send({ Error: "Error al crear la factura." });
-              return res
-                .status(200)
-                .send({ Mi_factura: facturaAgregada, Exito: cuartoOcupado });
-            });
+            Usuarios.findByIdAndUpdate(
+              { _id: cuartoOcupado.idHotel },
+              { $inc: { solicitado: 2 * 1 } },
+              { new: true },
+              (error, solicitado) => {
+                if (error)
+                  return res.status(500).send({
+                    Error: "Error al modificar las solicitudes del hotel.",
+                  });
+                var modeloFactura = new Facturas();
+                modeloFactura.total = req.params.precio;
+                modeloFactura.idUsuario = req.params.ID;
+                modeloFactura.save((error, facturaAgregada) => {
+                  if (error)
+                    return res
+                      .status(500)
+                      .send({ Error: "Error al crear la factura." });
+                  Historiales.findOne(
+                    {
+                      idUsuario: req.params.ID,
+                      idHotel: cuartoOcupado.idHotel,
+                    },
+                    (error, historial) => {
+                      if (error)
+                        return res
+                          .status(500)
+                          .send({ Error: "Error al verificar el historial" });
+                      if (historial) {
+                        return res.status(200).send({
+                          Mi_factura: facturaAgregada,
+                          Exito: cuartoOcupado,
+                          historialHotel: historial,
+                        });
+                      } else {
+                        var modeloHistorial = new Historiales();
+                        modeloHistorial.idUsuario = req.params.ID;
+                        modeloHistorial.idHotel = cuartoOcupado.idHotel;
+                        modeloHistorial.save((error, historialGuardado) => {
+                          if (error)
+                            return res.status(500).send({
+                              Error: "Error al agregar el historial.",
+                            });
+                          return res.status(200).send({
+                            Mi_factura: facturaAgregada,
+                            Exito: cuartoOcupado,
+                            historialHotel: historialGuardado,
+                          });
+                        });
+                      }
+                    }
+                  );
+                });
+              }
+            );
           }
         );
       }
-    }
-  });
-}
-
-function pagarServicio(req, res) {
-  Facturas.find({ idUsuario: req.params.ID }, (error, facturaEncontrada) => {
-    if (error)
-      return res
-        .status(500)
-        .send({ Error: "Error al buscar facturas del usuario." });
-    if (facturaEncontrada) {
-      Facturas.findOneAndUpdate(
-        { idUsuario: req.params.ID },
-        { $inc: { total: req.params.precio * 1 } },
-        { new: true },
-        (error, facturaActualizada) => {
-          if (error)
-            return res
-              .status(500)
-              .send({ Error: "Error al actualizar el precio de la factura" });
-          return res
-            .status(200)
-            .send({ Precio_actualizado: facturaActualizada });
-        }
-      );
-    } else {
-      return res.status(500).send({
-        Error:
-          "Para contratar un servicio primero debes rentar una habitación.",
-      });
     }
   });
 }
@@ -180,13 +282,33 @@ function verHabitacion(req, res) {
 }
 
 function eliminarPerfilUsuario(req, res) {
-  Usuarios.findByIdAndDelete(
-    { _id: req.params.ID, rol: "USUARIO" },
-    (error, perfilBorrado) => {
+  Habitaciones.updateMany(
+    { idUsuario: req.params.ID },
+    { disponibilidad: "DISPONIBLE", verificar: true, idUsuario: null },
+    (error, modificado) => {
       if (error)
-        return res.status(500).send({ Error: "Erro al borrar el perfil." });
+        return res
+          .status(500)
+          .send({ Error: "Error al cambiar el estado de las habitaciones" });
+      Usuarios.findByIdAndDelete(
+        { _id: req.params.ID, rol: "USUARIO" },
+        (error, perfilBorrado) => {
+          if (error)
+            return res.status(500).send({ Error: "Erro al borrar el perfil." });
+          return res.status(200).send({ Exito: "Perfil borrado." });
+        }
+      );
     }
   );
+  /*       Facturas.findByIdAndDelete(
+        { idUsuario: req.params.ID },
+        (error, facturasBorradas) => {
+          if (error)
+            return res
+              .status(500)
+              .send({ Error: "Error al buscar facturas del usuario." }); */
+  /*         }
+      ); */
 }
 
 function cancelarReservacion(req, res) {
@@ -209,7 +331,19 @@ function reservaciones(req, res) {
     if (error)
       return res.status(500).send({ Error: "Error al obtener reservaciones." });
     return res.status(200).send({ Reservas: misReservas });
-  }).populate("idHotel nombre");
+  }).populate("idHotel", " nombre");
+}
+
+function verHistorial(req, res) {
+  Historiales.find({ idUsuario: req.params.ID }, (error, miHistorial) => {
+    if (error)
+      return res.status(500).send({ Error: "Error al obtener el historial." });
+    if (!miHistorial)
+      return res
+        .status(500)
+        .send({ Error: "No te has hospedado en ningun hotel." });
+    return res.status(200).send({ Historial: miHistorial });
+  }).populate("idHotel", "nombre");
 }
 
 module.exports = {
@@ -220,4 +354,6 @@ module.exports = {
   verHabitacion,
   reservaciones,
   cancelarReservacion,
+  eliminarPerfilUsuario,
+  verHistorial,
 };
