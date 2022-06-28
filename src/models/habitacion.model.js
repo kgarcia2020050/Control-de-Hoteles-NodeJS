@@ -4,6 +4,7 @@ const Schema=mongoose.Schema;
 
 const Habitaciones=Schema({
     nombre:String,
+    descripcion:String,
     espacio:Number,
     verificar:Boolean,
     disponibilidad:String,

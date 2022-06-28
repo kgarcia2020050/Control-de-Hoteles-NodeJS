@@ -4,8 +4,8 @@ const Schema = mongoose.Schema;
 const Eventos = Schema({
   nombre: String,
   lugar: String,
+  descripcion:String,
   fecha: String,
-  precio: Number,
   idHotel: { type: Schema.Types.ObjectId, ref: "Usuarios" },
 });
 

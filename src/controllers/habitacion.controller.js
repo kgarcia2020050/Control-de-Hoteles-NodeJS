@@ -5,7 +5,12 @@ const { response } = require("express");
 
 function agregarHabitacion(req, res) {
   var datos = req.body;
-  if (datos.nombre == "" || datos.espacio == "" || datos.precio == "") {
+  if (
+    datos.nombre == "" ||
+    datos.descripcion == "" ||
+    datos.espacio == "" ||
+    datos.precio == ""
+  ) {
     return res.status(404).send({ Error: "Debes llenar todos los campos." });
   } else {
     Usuarios.findById({ _id: req.params.ID }, (error, hotelEncontrado) => {
@@ -41,6 +46,7 @@ function agregarHabitacion(req, res) {
                   modelo.espacio = datos.espacio;
                   modelo.verificar = true;
                   modelo.precio = datos.precio;
+                  modelo.descripcion=datos.descripcion;
                   modelo.disponibilidad = "DISPONIBLE";
                   modelo.idHotel = req.params.ID;
                   modelo.save((error, habitacionAgregada) => {
@@ -80,9 +86,31 @@ function verHabitaciones(req, res) {
   }).populate("idUsuario nombre");
 }
 
+function modificarHabitacion(req, res) {
+  var datos = req.body;
+  Habitaciones.findByIdAndUpdate(
+    { _id: req.params.ID },
+    datos,
+    { new: true },
+    (error, cuartoEditado) => {
+      if (error)
+        return res.status(500).send({ Error: "Error al editar el cuarto" });
+      return res.status(200).send({ Editado: cuartoEditado });
+    }
+  );
+}
 
+function habitacionID(req, res) {
+  Habitaciones.findById({ _id: req.params.ID }, (error, cuartoEncontrado) => {
+    if (error)
+      return res.status(500).send({ Error: "Error al buscar el cuarto" });
+    return res.status(200).send({ Cuarto: cuartoEncontrado });
+  });
+}
 
 module.exports = {
   agregarHabitacion,
   verHabitaciones,
+  modificarHabitacion,
+  habitacionID,
 };
