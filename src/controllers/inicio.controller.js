@@ -38,16 +38,11 @@ function registroUsuarios(req, res) {
           .status(500)
           .send({ Error: "Ya hay un usuario registrado con este correo." });
       } else {
-        const tiempoTranscurrido = Date.now();
-        const hoy = new Date(tiempoTranscurrido);
         var modeloUsuario = new Usuarios();
         modeloUsuario.nombre = datos.nombre;
         modeloUsuario.email = datos.email;
         modeloUsuario.rol = "USUARIO";
         modeloUsuario.telefono=datos.telefono;
-        modeloUsuario.dia = hoy.getDate();
-        modeloUsuario.mes = hoy.getMonth()+1;
-        modeloUsuario.anio = hoy.getFullYear();
         encriptar.hash(datos.password, null, null, (error, claveEncriptada) => {
           modeloUsuario.password = claveEncriptada;
           modeloUsuario.save((error, nuevoUsuario) => {

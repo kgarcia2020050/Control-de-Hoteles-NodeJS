@@ -16,7 +16,12 @@ api.put("/editarHotel/:ID", verificacion.Auth, controlador.editarHotel);
 api.post("/nuevoEvento/:ID", verificacion.Auth, controlador.agregarEvento);
 api.get("/misEventos/:ID", verificacion.Auth, controlador.verEventos);
 api.put("/cancelarReservacion/:ID", controlador.cancelarReservacion);
-api.get("/eventoHotel/:ID", verificacion.Auth, controlador.verEventos)
+api.get("/eventoHotel/:ID", verificacion.Auth, controlador.verEventos);
+api.post(
+  "/comprarServicio/:ID/:service/:IdService",
+  verificacion.Auth,
+  controlador.comprarServicio
+);
 
 api.delete(
   "/borrarPerfil/:ID",

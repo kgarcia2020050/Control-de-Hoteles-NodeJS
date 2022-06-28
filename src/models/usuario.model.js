@@ -10,9 +10,6 @@ const Usuarios= Schema({
     cuartos:Number,
     gerente:String,
     solicitado:Number,
-    dia:Number,
-    mes:Number,
-    anio:Number,
     telefono:String
 })
 
