@@ -5,6 +5,8 @@ const Eventos = require("../models/evento.model");
 const Servicios = require("../models/servicio.model");
 const Historiales = require("../models/historial.model");
 
+const Facturaciones = require("../models/facturacion.model");
+
 function comprarServicio(req, res) {
   Habitaciones.findOne(
     { idHotel: req.params.service, idUsuario: req.params.ID },
@@ -73,7 +75,7 @@ function comprarServicio(req, res) {
               );
             } else {
               Historiales.create(
-                { idUsuario: req.params.ID, idServicio: req.params.service },
+                { idUsuario: req.params.ID, idServicio: req.params.IdService },
                 (error, historialCreado) => {
                   if (error)
                     return res
@@ -99,7 +101,7 @@ function comprarServicio(req, res) {
                         { new: true },
                         (error, facturaActualizada) => {
                           if (error) {
-                            console.log(facturaActualizada)
+                            console.log(facturaActualizada);
                             return res.status(500).send({
                               Error: "Error al actualizar la factura.",
                             });
@@ -438,19 +440,34 @@ function verHabitacion(req, res) {
 }
 
 function eliminarPerfilUsuario(req, res) {
-  Habitaciones.updateMany(
-    { idUsuario: req.params.ID },
-    { disponibilidad: "DISPONIBLE", verificar: true, idUsuario: null },
-    (error, modificado) => {
+  Usuarios.findByIdAndDelete(
+    { _id: req.params.ID, rol: "USUARIO" },
+    (error, perfilBorrado) => {
       if (error)
-        return res
-          .status(500)
-          .send({ Error: "Error al cambiar el estado de las habitaciones" });
-      Usuarios.findByIdAndDelete(
-        { _id: req.params.ID, rol: "USUARIO" },
-        (error, perfilBorrado) => {
+        return res.status(500).send({ Error: "Erro al borrar el perfil." });
+      Habitaciones.find(
+        { idUsuario: req.params.ID },
+        (error, habitacionesEncontradas) => {
           if (error)
-            return res.status(500).send({ Error: "Erro al borrar el perfil." });
+            return res
+              .status(500)
+              .send({ Error: "Error al obtener la habitacion." });
+          if (habitacionesEncontradas) {
+            Habitaciones.updateMany(
+              { idUsuario: req.params.ID },
+              {
+                disponibilidad: "DISPONIBLE",
+                verificar: true,
+                idUsuario: null,
+              },
+              (error, modificado) => {
+                if (error)
+                  return res.status(500).send({
+                    Error: "Error al cambiar el estado de las habitaciones",
+                  });
+              }
+            );
+          }
           Historiales.find(
             { idUsuario: req.params.ID },
             (error, historiales) => {
@@ -529,6 +546,62 @@ function editarHotel(req, res) {
   );
 }
 
+function verCompras(req, res) {
+  Facturas.findOne({ idUsuario: req.params.ID }, (error, compras) => {
+    if (error)
+      return res.status(500).send({ Error: "Error al obtener las compras." });
+    return res.status(200).send({ Compras: compras });
+  });
+}
+
+function facturar(req, res) {
+  Facturas.findOne({ idUsuario: req.params.ID }, (error, pagar) => {
+    if (error)
+      return res.status(500).send({ Error: "Error al obtener las facturas." });
+    if (pagar) {
+      Facturas.findOneAndDelete(
+        { idUsuario: req.params.ID },
+        (error, facturaVaciada) => {
+          if (error)
+            return res
+              .status(500)
+              .send({ Error: "Error al vaciar la factura." });
+          Habitaciones.find(
+            { idUsuario: req.params.ID },
+            (error, habitacionesEncontradas) => {
+              if (error)
+                return res
+                  .status(500)
+                  .send({ Error: "Error al obterner las habitaciones" });
+              if (habitacionesEncontradas) {
+                Habitaciones.updateMany(
+                  { idUsuario: req.params.ID },
+                  {
+                    disponibilidad: "DISPONIBLE",
+                    verificar: true,
+                    idUsuario: null,
+                  },
+                  (error, modificado) => {
+                    if (error)
+                      return res.status(500).send({
+                        Error: "Error al cambiar el estado de las habitaciones",
+                      });
+                  }
+                );
+              }
+              return res.status(200).send({ Cobrado: "Pagos realizados" });
+            }
+          );
+        }
+      );
+    } else {
+      return res
+        .status(500)
+        .send({ Error: "No has realizado ninguna compra." });
+    }
+  });
+}
+
 module.exports = {
   editar,
   obtenerId,
@@ -543,4 +616,6 @@ module.exports = {
   agregarEvento,
   verEventos,
   comprarServicio,
+  verCompras,
+  facturar,
 };

@@ -30,4 +30,7 @@ api.delete(
 );
 api.get("/historial/:ID", verificacion.Auth, controlador.verHistorial);
 
+api.get("/verFactura/:ID", verificacion.Auth, controlador.verCompras);
+api.put("/facturar/:ID", verificacion.Auth, controlador.facturar);
+
 module.exports = api;
