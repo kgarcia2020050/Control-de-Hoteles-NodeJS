@@ -46,7 +46,7 @@ function agregarHabitacion(req, res) {
                   modelo.espacio = datos.espacio;
                   modelo.verificar = true;
                   modelo.precio = datos.precio;
-                  modelo.descripcion=datos.descripcion;
+                  modelo.descripcion = datos.descripcion;
                   modelo.disponibilidad = "DISPONIBLE";
                   modelo.idHotel = req.params.ID;
                   modelo.save((error, habitacionAgregada) => {
@@ -108,9 +108,37 @@ function habitacionID(req, res) {
   });
 }
 
+function disponibilidad(req, res) {
+  Habitaciones.find(
+    { idHotel: req.params.ID, disponibilidad: "DISPONIBLE" },
+    (error, cuartosDisponibles) => {
+      if (error)
+        return res
+          .status(500)
+          .send({ Error: "Error al buscar los cuartos disponibles" });
+      return res.status(200).send({ Disponibles: cuartosDisponibles });
+    }
+  );
+}
+
+function ocupadas(req, res) {
+  Habitaciones.find(
+    { idHotel: req.params.ID, disponibilidad: "RESERVADA" },
+    (error, cuartosReservados) => {
+      if (error)
+        return res
+          .status(500)
+          .send({ Error: "Error al buscar los cuartos reservados" });
+      return res.status(200).send({ Reservados: cuartosReservados });
+    }
+  );
+}
+
 module.exports = {
   agregarHabitacion,
   verHabitaciones,
   modificarHabitacion,
   habitacionID,
+  disponibilidad,
+  ocupadas
 };

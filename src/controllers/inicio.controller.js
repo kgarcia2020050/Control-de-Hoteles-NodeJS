@@ -1,6 +1,9 @@
 const encriptar = require("bcrypt-nodejs");
 const Usuarios = require("../models/usuario.model");
 const jwt = require("../service/jwt");
+const Facturas = require("../models/factura.model");
+const Historiales = require("../models/historial.model");
+const { reservaciones } = require("./usuario.controller");
 
 function crearAdmin() {
   Usuarios.findOne({ rol: "ADMIN" }, (error, adminHallado) => {
@@ -42,7 +45,7 @@ function registroUsuarios(req, res) {
         modeloUsuario.nombre = datos.nombre;
         modeloUsuario.email = datos.email;
         modeloUsuario.rol = "USUARIO";
-        modeloUsuario.telefono=datos.telefono;
+        modeloUsuario.telefono = datos.telefono;
         encriptar.hash(datos.password, null, null, (error, claveEncriptada) => {
           modeloUsuario.password = claveEncriptada;
           modeloUsuario.save((error, nuevoUsuario) => {
@@ -52,9 +55,42 @@ function registroUsuarios(req, res) {
               return res
                 .status(500)
                 .send({ Error: "No te pudiste registrar." });
-            return res
-              .status(200)
-              .send({ Exito: "Te has registrado exitosamente." });
+            Usuarios.findOne(
+              { email: datos.email },
+              (error, usuarioEncontrado) => {
+                if (error)
+                  return res
+                    .status(500)
+                    .send({ Error: "Error al buscar  al usuario." });
+                Facturas.create(
+                  {
+                    idUsuario: usuarioEncontrado._id,
+                    factura: [],
+                  },
+                  (error, facturaCreada) => {
+                    if (error)
+                      return res
+                        .status(500)
+                        .send({ Error: "Error al crear la factura" });
+                    Historiales.create(
+                      {
+                        idUsuario: usuarioEncontrado._id,
+                        historial: [],
+                      },
+                      (error, historialCreado) => {
+                        if (error)
+                          return res
+                            .status(500)
+                            .send({ Error: "Error al crear el historial." });
+                        return res
+                          .status(200)
+                          .send({ PerfilCreado: nuevoUsuario });
+                      }
+                    );
+                  }
+                );
+              }
+            );
           });
         });
       }

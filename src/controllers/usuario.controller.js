@@ -14,128 +14,72 @@ function comprarServicio(req, res) {
       if (error)
         return res.status(500).send({ Error: "Error al comprar el servicio." });
       if (reservacion) {
-        Historiales.findOne(
-          { idUsuario: req.params.ID, idServicio: req.params.IdService },
-          (error, historial) => {
+        Servicios.findById(
+          { _id: req.params.IdService },
+          (error, servicioEncontrado) => {
             if (error)
               return res
                 .status(500)
-                .send({ Error: "Error buscar el historial." });
-            if (historial) {
-              Servicios.findById(
-                { _id: req.params.IdService },
-                (error, servicioEncontrado) => {
-                  if (error)
-                    return res
-                      .status(500)
-                      .send({ Error: "Error al obtener el servicio." });
-                  Facturas.findOneAndUpdate(
-                    { idUsuario: req.params.ID },
-                    {
-                      $push: {
-                        factura: {
-                          compra: servicioEncontrado.nombre,
-                          precio: servicioEncontrado.precio,
-                        },
+                .send({ Error: "Error al obtener el servicio." });
+            Historiales.findOneAndUpdate(
+              { idUsuario: req.params.ID },
+              {
+                $push: {
+                  historial: {
+                    nombre: servicioEncontrado.nombre,
+                  },
+                },
+              },
+              { new: true },
+              (error, historialActualizad) => {
+                if (error)
+                  return res
+                    .status(500)
+                    .send({ Error: "Error al almacenar el historial." });
+                Facturas.findOneAndUpdate(
+                  { idUsuario: req.params.ID },
+                  {
+                    $push: {
+                      factura: {
+                        compra: servicioEncontrado.nombre,
+                        precio: servicioEncontrado.precio,
                       },
                     },
-                    { new: true },
-                    (error, facturaActualizada) => {
-                      if (error) {
-                        console.log(facturaActualizada);
-                        return res.status(500).send({
-                          Error: "Error al actualizar la factura.",
+                  },
+                  { new: true },
+                  (error, facturaActualizada) => {
+                    if (error) {
+                      console.log(facturaActualizada);
+                      return res.status(500).send({
+                        Error: "Error al actualizar la factura.",
+                      });
+                    }
+                    var totalFactura = 0;
+                    for (
+                      var i = 0;
+                      i < facturaActualizada.factura.length;
+                      i++
+                    ) {
+                      totalFactura =
+                        totalFactura + facturaActualizada.factura[i].precio;
+                    }
+                    Facturas.findOneAndUpdate(
+                      { _id: facturaActualizada._id },
+                      { total: totalFactura },
+                      (error, totalActualizado) => {
+                        if (error)
+                          return res.status(500).send({
+                            Error: "Error al actualizar el total.",
+                          });
+                        return res.status(200).send({
+                          FacturaActualizada: facturaActualizada,
                         });
                       }
-                      var totalFactura = 0;
-                      for (
-                        var i = 0;
-                        i < facturaActualizada.factura.length;
-                        i++
-                      ) {
-                        totalFactura =
-                          totalFactura + facturaActualizada.factura[i].precio;
-                      }
-                      Facturas.findOneAndUpdate(
-                        { _id: facturaActualizada._id },
-                        { total: totalFactura },
-                        (error, totalActualizado) => {
-                          if (error)
-                            return res.status(500).send({
-                              Error: "Error al actualizar el total.",
-                            });
-                          return res.status(200).send({
-                            FacturaActualizada: facturaActualizada,
-                          });
-                        }
-                      );
-                    }
-                  );
-                }
-              );
-            } else {
-              Historiales.create(
-                { idUsuario: req.params.ID, idServicio: req.params.IdService },
-                (error, historialCreado) => {
-                  if (error)
-                    return res
-                      .status(500)
-                      .send({ Error: "Error al crear el historial." });
-                  Servicios.findById(
-                    { _id: req.params.IdService },
-                    (error, servicioEncontrado) => {
-                      if (error)
-                        return res
-                          .status(500)
-                          .send({ Error: "Error al obtener el servicio." });
-                      Facturas.findOneAndUpdate(
-                        { idUsuario: req.params.ID },
-                        {
-                          $push: {
-                            factura: {
-                              compra: servicioEncontrado.nombre,
-                              precio: servicioEncontrado.precio,
-                            },
-                          },
-                        },
-                        { new: true },
-                        (error, facturaActualizada) => {
-                          if (error) {
-                            console.log(facturaActualizada);
-                            return res.status(500).send({
-                              Error: "Error al actualizar la factura.",
-                            });
-                          }
-                          var totalFactura = 0;
-                          for (
-                            var i = 0;
-                            i < facturaActualizada.factura.length;
-                            i++
-                          ) {
-                            totalFactura =
-                              totalFactura +
-                              facturaActualizada.factura[i].precio;
-                          }
-                          Facturas.findOneAndUpdate(
-                            { _id: facturaActualizada._id },
-                            { total: totalFactura },
-                            (error, totalActualizado) => {
-                              if (error)
-                                return res.status(500).send({
-                                  Error: "Error al actualizar el total.",
-                                });
-                              return res.status(200).send({
-                                FacturaActualizada: facturaActualizada,
-                              });
-                            }
-                          );
-                        }
-                      );
-                    }
-                  );
-                }
-              );
-            }
+                    );
+                  }
+                );
+              }
+            );
           }
         );
       } else {
@@ -253,174 +197,65 @@ function pagarHabitacion(req, res) {
   if (req.params.dias <= 0) {
     return res.status(500).send({ Error: "Debes quedarte al menos un dia." });
   } else {
-    Facturas.findOne(
-      { idUsuario: req.params.ID },
-      (error, facturaEncontrada) => {
+    Habitaciones.findByIdAndUpdate(
+      { _id: req.params.cuarto },
+      {
+        disponibilidad: "RESERVADA",
+        verificar: false,
+        idUsuario: req.params.ID,
+      },
+      { new: true },
+      (error, cuartoOcupado) => {
         if (error)
-          return res.status(500).send({ Error: "Error al buscar la factura." });
-        if (facturaEncontrada) {
-          Habitaciones.findByIdAndUpdate(
-            { _id: req.params.cuarto },
-            {
-              disponibilidad: "RESERVADA",
-              verificar: false,
-              idUsuario: req.params.ID,
+          return res
+            .status(500)
+            .send({ Error: "Error al modificar el cuarto." });
+        Facturas.findOneAndUpdate(
+          { idUsuario: req.params.ID },
+          {
+            $push: {
+              factura: {
+                compra: cuartoOcupado.nombre,
+                precio: cuartoOcupado.precio * req.params.dias,
+              },
             },
-            { new: true },
-            (error, cuartoOcupado) => {
-              if (error)
-                return res
-                  .status(500)
-                  .send({ Error: "Error al modificar el cuarto." });
-              Facturas.findByIdAndUpdate(
-                { _id: facturaEncontrada._id },
-                {
-                  $push: {
-                    factura: {
-                      compra: cuartoOcupado.nombre,
-                      precio: cuartoOcupado.precio * req.params.dias,
-                    },
-                  },
-                },
-                { new: true },
-                (error, facturaActualizada) => {
-                  if (error)
-                    return res
-                      .status(500)
-                      .send({ Error: "Error al actualizar la factura." });
-                  var totalFactura = 0;
+          },
+          { new: true },
+          (error, facturaActualizada) => {
+            if (error)
+              return res
+                .status(500)
+                .send({ Error: "Error al actualizar la factura." });
+            var totalFactura = 0;
 
-                  for (var i = 0; i < facturaActualizada.factura.length; i++) {
-                    totalFactura =
-                      totalFactura + facturaActualizada.factura[i].precio;
+            for (var i = 0; i < facturaActualizada.factura.length; i++) {
+              totalFactura =
+                totalFactura + facturaActualizada.factura[i].precio;
+            }
+            Facturas.findOneAndUpdate(
+              { idUsuario: req.params.ID },
+              { total: totalFactura },
+              (error, totalActualizado) => {
+                if (error)
+                  return res.status(500).send({
+                    Error: "Error al actualizar el total de la factura.",
+                  });
+                Usuarios.findByIdAndUpdate(
+                  { _id: cuartoOcupado.idHotel },
+                  { $inc: { solicitado: 2 * 1 } },
+                  { new: true },
+                  (error, hotelSolicitado) => {
+                    if (error)
+                      return res.status(500).send({
+                        Error: "Error al modificar las solicitudes del hotel.",
+                      });
+                    return res.status(200).send(hotelSolicitado);
                   }
-                  Facturas.findByIdAndUpdate(
-                    { _id: facturaEncontrada._id },
-                    { total: totalFactura },
-                    (error, totalActualizado) => {
-                      if (error)
-                        return res.status(500).send({
-                          Error: "Error al actualizar el total de la factura.",
-                        });
-                      Usuarios.findByIdAndUpdate(
-                        { _id: cuartoOcupado.idHotel },
-                        { $inc: { solicitado: 2 * 1 } },
-                        { new: true },
-                        (error, hotelSolicitado) => {
-                          if (error)
-                            return res.status(500).send({
-                              Error:
-                                "Error al modificar las solicitudes del hotel.",
-                            });
-                          Historiales.findOne(
-                            {
-                              idUsuario: req.params.ID,
-                              idHotel: cuartoOcupado.idHotel,
-                            },
-                            (error, historialExistente) => {
-                              if (error)
-                                return res.status(500).send({
-                                  Error: "Error al obtener el historial.",
-                                });
-                              if (historialExistente) {
-                                return res.status(200).send({
-                                  Precio_actualizado: facturaActualizada,
-                                  aumento: hotelSolicitado,
-                                  factura: facturaActualizada,
-                                });
-                              } else {
-                                Historiales.create(
-                                  {
-                                    idUsuario: req.params.ID,
-                                    idHotel: cuartoOcupado.idHotel,
-                                  },
-
-                                  (error, historialCreado) => {
-                                    if (error)
-                                      return res.status(500).send({
-                                        Error: "Error al crear el historial.",
-                                      });
-                                    return res.status(200).send({
-                                      Precio_actualizado: facturaActualizada,
-                                      aumento: hotelSolicitado,
-                                      factura: facturaActualizada,
-                                      historial: historialCreado,
-                                    });
-                                  }
-                                );
-                              }
-                            }
-                          );
-                        }
-                      );
-                    }
-                  );
-                }
-              );
-            }
-          );
-        } else {
-          Habitaciones.findByIdAndUpdate(
-            { _id: req.params.cuarto },
-            {
-              disponibilidad: "RESERVADA",
-              verificar: false,
-              idUsuario: req.params.ID,
-            },
-            (error, cuartoOcupado) => {
-              if (error)
-                return res
-                  .status(500)
-                  .send({ Error: "Error al modificar el cuarto." });
-
-              Facturas.create(
-                {
-                  idUsuario: req.params.ID,
-                  factura: {
-                    compra: cuartoOcupado.nombre,
-                    precio: cuartoOcupado.precio * req.params.dias,
-                  },
-                  total: cuartoOcupado.precio * req.params.dias,
-                },
-                (error, facturaCreada) => {
-                  if (error)
-                    return res
-                      .status(500)
-                      .send({ Error: "Error al crear la factura." });
-
-                  Usuarios.findByIdAndUpdate(
-                    { _id: cuartoOcupado.idHotel },
-                    { $inc: { solicitado: 2 * 1 } },
-                    { new: true },
-                    (error, hotelSolicitado) => {
-                      if (error)
-                        return res
-                          .status(500)
-                          .send({ Error: "Error al modificar el hotel." });
-                      Historiales.create(
-                        {
-                          idUsuario: req.params.ID,
-                          idHotel: cuartoOcupado.idHotel,
-                        },
-                        (error, historialCreado) => {
-                          if (error)
-                            return res.status(500).send({
-                              Error: "Error al crear el historial.",
-                            });
-                          return res.status(200).send({
-                            aumento: hotelSolicitado,
-                            factura: {},
-                            historial: historialCreado,
-                          });
-                        }
-                      );
-                    }
-                  );
-                }
-              );
-            }
-          );
-        }
+                );
+              }
+            );
+          }
+        );
       }
     );
   }
@@ -521,7 +356,7 @@ function reservaciones(req, res) {
 }
 
 function verHistorial(req, res) {
-  Historiales.find({ idUsuario: req.params.ID }, (error, miHistorial) => {
+  Historiales.findOne({ idUsuario: req.params.ID }, (error, miHistorial) => {
     if (error)
       return res.status(500).send({ Error: "Error al obtener el historial." });
     if (!miHistorial)
@@ -529,7 +364,7 @@ function verHistorial(req, res) {
         .status(500)
         .send({ Error: "No te has hospedado en ningun hotel." });
     return res.status(200).send({ Historial: miHistorial });
-  }).populate("idHotel", "nombre");
+  });
 }
 
 function editarHotel(req, res) {

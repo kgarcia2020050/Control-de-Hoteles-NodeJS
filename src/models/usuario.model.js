@@ -10,7 +10,7 @@ const Usuarios= Schema({
     cuartos:Number,
     gerente:String,
     solicitado:Number,
-    telefono:String
+    telefono:String,
 })
 
 module.exports =mongoose.model("Usuarios",Usuarios)
