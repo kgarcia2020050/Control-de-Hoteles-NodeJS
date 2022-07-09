@@ -394,8 +394,10 @@ function facturar(req, res) {
     if (error)
       return res.status(500).send({ Error: "Error al obtener las facturas." });
     if (pagar) {
-      Facturas.findOneAndDelete(
+      Facturas.findOneAndUpdate(
         { idUsuario: req.params.ID },
+        { $set: { factura: [] } },
+        { new: true },
         (error, facturaVaciada) => {
           if (error)
             return res
