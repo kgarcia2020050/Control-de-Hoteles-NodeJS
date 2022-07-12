@@ -21,4 +21,8 @@ mongoose
     console.log(error);
   });
 
+app.get("/", function (req, res) {
+  return res.status(200).send("Hola mundo");
+});
+
 admin.crearAdmin();
