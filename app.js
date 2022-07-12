@@ -2,7 +2,6 @@ const express = require("express");
 const cors = require("cors");
 var app = express();
 
-const path=require("path");
 
 const rutasInicio = require("./src/routes/usuario.route");
 const rutasHotel = require("./src/routes/hotel.route");
@@ -20,7 +19,6 @@ app.use(
   rutasHotel,
   rutasHabitacion,
   rutasEvento,
-  express.static(path.join(__dirname, "./src/img"))
 );
 
 module.exports = app;
