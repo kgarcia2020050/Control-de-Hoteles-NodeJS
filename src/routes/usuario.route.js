@@ -9,14 +9,17 @@ api.post("/registro", controller.registroUsuarios);
 api.get("/editarPerfil/:ID", verificacion.Auth, controlador.obtenerId);
 api.put("/modificarPerfil/:ID", verificacion.Auth, controlador.editar);
 api.get("/verHotel/:ID", verificacion.Auth, controlador.verHotel);
+api.get("/hotelEspecifico/:ID", controlador.verHotel);
 api.post("/pagar/:ID/:cuarto/:dias", controlador.pagarHabitacion);
 api.get("/verCuarto/:ID", verificacion.Auth, controlador.verHabitacion);
 api.get("/misReservas/:ID", verificacion.Auth, controlador.reservaciones);
 api.put("/editarHotel/:ID", verificacion.Auth, controlador.editarHotel);
 api.post("/nuevoEvento/:ID", verificacion.Auth, controlador.agregarEvento);
 api.get("/misEventos/:ID", verificacion.Auth, controlador.verEventos);
+api.get("/eventosHotel/:ID", controlador.verEventos);
 api.put("/cancelarReservacion/:ID", controlador.cancelarReservacion);
 api.get("/eventoHotel/:ID", verificacion.Auth, controlador.verEventos);
+api.get("/eventosHotel/:ID", controlador.verEventos);
 api.post(
   "/comprarServicio/:ID/:service/:IdService",
   verificacion.Auth,
